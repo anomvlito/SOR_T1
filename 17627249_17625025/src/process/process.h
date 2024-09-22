@@ -21,4 +21,4 @@ struct Process {
   int num_bursts;
   int io_wait_time;
   int deadline;
-}
+};
