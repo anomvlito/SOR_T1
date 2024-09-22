@@ -1,3 +1,4 @@
+#include "main.h"
 #include "../file_manager/manager.h"
 #include "../process/process.h"
 #include "../queue/queue.h"
@@ -22,11 +23,7 @@
 // prioridad en estado READY a la CPU, esto implica ignorar a todos los que se
 // encuentren en estado WAITING, sin moverlos de su posición actual.
 
-int main(int argc, char const *argv[]) {
-  /*Lectura del input*/
-  char *file_name = (char *)argv[1];
-  InputFile *input_file = read_file(file_name);
-
+void imprime_inicio(char *file_name, InputFile *input_file) {
   /*Mostramos el archivo de input en consola*/
   printf("Nombre archivo: %s\n", file_name);
   printf("Cantidad de procesos: %d\n", input_file->len);
@@ -37,6 +34,50 @@ int main(int argc, char const *argv[]) {
     }
     printf("\n");
   }
+}
+
+int main(int argc, char const *argv[]) {
+  /*Lectura del input*/
+  char *file_name = (char *)argv[1];
+  InputFile *input_file = read_file(file_name);
+
+  imprime_inicio(file_name, input_file);
+
+  int Numero_de_procesos = input_file->len;
+
+  // ## 1) Se lee la primera línea de input:
+
+  // - Se carga el quantum *q* asociado al scheduler, el cual se utilizará en
+  // ambas colas. Por enunciado, la cola High tendrá el doble de quantum que la
+  // cola Low: Quantum High = 2q, Quantum Low = q.
+
+  // - Se carga el tiempo de inicio *T inicio* asociado al scheduler, el cual se
+  // utilizará para determinar si un proceso debe ingresar a la cola High.
+
+  int quantum = atoi(input_file->lines[0][0]);
+
+  // se crean las colas para pasarlas al scheduler, cada cola recibe el quantum,
+  // high recibe 2*quantum y low recibe quantum
+
+  struct Queue *queueHigh = queue_init(*quantum * 2);
+  // ver el nombre que le pone rosario
+  // ################################################################################################
+
+  struct Queue *queueLow = queue_init(*quantum);
+  // ver el nombre que le pone rosario
+  // ###########################################################################################
+
+  // 	## 2) Se leen las líneas de input posteriores a la primera, donde
+  // encontraremos la información asociada a los procesos.
+
+  // - Se crean los procesos correspondientes al `struct process`, aun no se
+  // ingresan al Scheduler.
+  // - Hay que tener en consideración que cada proceso tiene un tiempo
+  // `T_INICIO`, el cual es el tiempo en el que el proceso entra a la cola por
+  // primera vez.
+
+  for (int i = 0; i < Numero_de_procesos; ++i) {
+  };
 
   input_file_destroy(input_file);
 }
