@@ -21,20 +21,46 @@ Considerar que para esta tarea, no nos están pidiendo ejecutar los procesos con
 
 # **Construcción de structs**
 
+
+## Scheduler
+
+Crear una función que controle lo que pasa en cada intervalo tick de tiempo. En esta función se van actualizando cada uno de los structs, haciendo uso de punteros de forma inteligente que apunte a la cabeza de los queues y a cada uno de sus elementos, dependiendo de su estado.
+
+- si el proceso esta en estado {READY}.
+- En cada intervalo tick, revisar todos los procesos y actualizar sus parametros si es necesario:
+    - si el proceso esta en estado finished, saltarlo.
+    - Si el proceso esta en estado waiting y su atributo primera_rafaga_de_cpu = {True}, entonces cuando se le apunte en cada ciclo de tick para actualizar sus parametros, restar una unidad de tiempo de espera i/o_waiting.
+    - si el proceso esta en estado waiting y su atributo primera_rafaga_de_cpu = {False}, entonces dejar sus atributos tal y como estan, probablemente el proceso fue interrumpido antes de poder terminar su primera rafaga de cpu
+
+
+
 ## **Funciones asociadas a la CPU**
-- Modifica el quantum de cada proceso, el cual está designado desde la cola de la que proviene antes de entrar a la CPU.
+- Modifica el quantum de cada proceso que entra a la cpu, el cual está designado desde la cola de la que proviene antes de entrar a la CPU.
 - Modifica el `cpu_burst` asociado al ciclo, ten en cuenta que un proceso puede tener más de una ráfaga de burst.
 
+
+## Process 
+- cada proceso deber tener el atributo q_cola_de_origen, el cual no puede decrementar a diferencia de quantum restante,
+- cada proceso debe tener quantum_restante el cual dene estar asociado a cola actual
+- los procesos deberian ser "encendidos" y dependiendo de su estado, si ya quemaron su primerea rafaga de cpu, ir actualizando cada unos de sus atributos.
+- si el proceso cambia de cola, cambiar q_cola_de_origen y reiniciar quantum
+
 ## **Funciones asociadas al Scheduler**
-- Crear una función que controle lo que pasa en cada intervalo tick de tiempo. En esta función se van actualizando cada uno de los structs, haciendo uso de punteros de forma inteligente que apunten a los queues y a cada uno de sus elementos, dependiendo de su estado.
+.
 
 ## **Funciones asociadas a colas-queltehues**
 
 - Crear una función que controla la prioridad entre procesos para su ejecución.
+    - La cabeza siempre que pueda estara en ready, ahora si en la cola high la cabeza no esta en estado ready se asumira que los demas procesos de la cola no estan en estado ready. 
+    - Comparar prioridad de procesos en la misma cola solo si estan en estado ready, si tienen la misma desempatar como dice en el enunciado.
+    - Tener atención con los procesos que terminan su espera i/o_waiting, ya que pasarian de estado waiting a ready y podrian tener mayor prioridad que otros elementos en la misma cola que ya estaban en estado ready.
+
+
 - Crear una función que controla si un proceso en la cola low tiene que pasar a la cola high.
 
-Evaluar si todo lo anterior debe ser controlado por el scheduler, o si las colas queltehues deben tener independencia. Me inclino más por esta última opción.
+- Crear una funcion que controle el tiempo de espera i/o para cada uno de los procesos 
 
+ las colas queltehues deben tener independencia
 
 
 # **Ejecución/Estrategia**
