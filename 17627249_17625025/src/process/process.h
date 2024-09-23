@@ -13,12 +13,14 @@
 // remaining_quantum;) Contadores para estadísticas (interrupciones, tiempos de
 // espera, etc.)
 
-struct Process {
+typedef enum {RUNNING, READY, WAITING, FINISHED} estado_t;
+
+typedef struct process {
   char nombre[10];
   int pid;
-  enum { RUNNING, READY, WAITING, FINISHED } estado;
+  estado_t estado;
   int burst_time; // Tiempo de ejecucion por rafaga
-  int num_bursts;
+  int num_bursts; //
   int io_wait_time;
   int deadline;
-};
+} Process;
