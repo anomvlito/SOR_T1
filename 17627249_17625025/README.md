@@ -118,7 +118,7 @@ Crear una función que controle lo que pasa en cada intervalo tick de tiempo. En
 
 ## x) Al no quedar procesos en las colas se asume que estos estan en la lista de procesos finalizados.
 
-    - se crea el informe correspondiente que escribira en el csv como output, esto se hace a traves de la funcion
+    - se crea el informe correspondiente que escribira en el csv como output, esto se hace a traves de la funcion  walk_in_finished_processes, la cual recorrera todos los procesos terminados y tomara los atributos de cada proceso 
 
 
 

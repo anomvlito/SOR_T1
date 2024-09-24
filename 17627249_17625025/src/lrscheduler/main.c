@@ -150,15 +150,25 @@ void scheduler(Queue *high_queue, Queue *low_queue, Process **cpu_process,
     if ((*cpu_process)->burst_restante == 0) {
       (*cpu_process)->num_bursts--;
       if ((*cpu_process)->num_bursts == 0) {
+        // procesos restantes -1
+
+        // si no hay mas procesos restantes se termina la ejecucion
         (*cpu_process)->estado = FINISHED;
         (*cpu_process)->t_LCPU = Tactual + 1;
         // Agregar a la lista de procesos finalizados
+
+        // #####################
+        // #####################
+
+        // calcular deadline
+        // #####################
+        // #####################
         add_finished_process(finished_list, *cpu_process);
         *cpu_process = NULL;
       } else {
         (*cpu_process)->estado = WAITING;
         (*cpu_process)->io_wait_restante = (*cpu_process)->io_wait_time;
-        (*cpu_process)->primera_rafaga_de_cpu = false;
+        (*cpu_process)->= false;
         (*cpu_process)->t_LCPU = Tactual + 1;
         *cpu_process = NULL;
       }
@@ -172,6 +182,8 @@ void scheduler(Queue *high_queue, Queue *low_queue, Process **cpu_process,
       *cpu_process = NULL;
     }
   }
+
+  // #####################################################################################################
 
   // Seleccionar próximo proceso si la CPU está libre
   if (*cpu_process == NULL) {
@@ -204,9 +216,9 @@ int main(int argc, char const *argv[]) {
 
   // ## 1) Se lee la primera línea de input:
 
-  // - Se carga el quantum *q* asociado al scheduler, el cual se utilizará en
-  // ambas colas. Por enunciado, la cola High tendrá el doble de quantum que
-  // la cola Low: Quantum High = 2q, Quantum Low = q.
+  // - Se carga el quantum_restante *q* asociado al scheduler, el cual se
+  // utilizará en ambas colas. Por enunciado, la cola High tendrá el doble de
+  // quantum que la cola Low: Quantum High = 2q, Quantum Low = q.
 
   // - Se carga el tiempo de inicio *T inicio* asociado al scheduler, el cual
   // se utilizará para determinar si un proceso debe ingresar a la cola High.
