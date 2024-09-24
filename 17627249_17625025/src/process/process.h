@@ -13,7 +13,7 @@
 // remaining_quantum;) Contadores para estadísticas (interrupciones, tiempos de
 // espera, etc.)
 
-typedef enum {RUNNING, READY, WAITING, FINISHED} estado_t;
+typedef enum { RUNNING, READY, WAITING, FINISHED } estado_t;
 
 typedef struct process {
   char nombre[10];
