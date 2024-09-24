@@ -267,7 +267,7 @@ int main(int argc, char const *argv[]) {
         int priority = (tick - process->t_LCPU) - process->t_deadline;
 
         // Insertar en la cola de alta prioridad
-        queue_insert_max(high_queue, process, priority);
+        queue_insert_max(high_queue, process, priority); /////////////
       }
     }
     // Ejecutar el scheduler
