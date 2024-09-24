@@ -18,9 +18,23 @@ typedef enum { RUNNING, READY, WAITING, FINISHED } estado_t;
 typedef struct process {
   char nombre[10];
   int pid;
-  estado_t estado;
   int burst_time; // Tiempo de ejecucion por rafaga
   int num_bursts; //
   int io_wait_time;
   int deadline;
+  estado_t estado;
+  int quantum;
+  char queue[10];
+  int interrupciones;
+  int turnaround_time;
+  int response_time;
+  int waiting_time; // numero de veces que se encuentre en estado waiting y ready(sin contar ready cuando pasa a running)
+  //sumar +1 siempre que este en ready y waiting, al ingresar un proceso a la cpu ANTES de actualizar su estado a running, reviar
+  //si es ready, si es asi hay que restarle 1.
+  int deadline_sum;
+  int n_burst_restante; // para saber si es su primera rafaga, y su ultima para pasar a finished
+  int current_burst; // para saber si sale de la CPU 
+  int current_io_wait_time; // para saber cuando pueda pasar a READY, en cada iteracion que esta en waiting se le suma 1 y al 
+  // igualarse con io_wait_time queda en ready
+
 } Process;
