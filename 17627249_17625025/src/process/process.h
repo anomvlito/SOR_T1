@@ -18,9 +18,20 @@ typedef enum { RUNNING, READY, WAITING, FINISHED } estado_t;
 typedef struct process {
   char nombre[10];
   int pid;
-  estado_t estado;
   int burst_time; // Tiempo de ejecucion por rafaga
   int num_bursts; //
   int io_wait_time;
   int deadline;
+  estado_t estado;
+  int quantum;
+  char queue[10];
+  int interrupciones;
+  int turnaround_time;
+  int response_time;
+  int waiting_time;
+  int deadline_sum;
+  int n_burst_restante;
+  int current_burst;
+  int current_io_wait_time;
+
 } Process;
