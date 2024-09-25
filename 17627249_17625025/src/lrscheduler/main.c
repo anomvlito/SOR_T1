@@ -108,6 +108,7 @@ void scheduler(Queue *high_queue, Queue *low_queue, Process **cpu_process,
         (*cpu_process)->estado = READY;   // Proceso sigue en estado READY
         (*cpu_process)->quantum =
             (*cpu_process)->ultima_cola_visitada == HIGH_QUEUE ? 2 * q : q;
+        (*cpu_process)->t_LCPU = tick;
         queue_insert_max((*cpu_process)->ultima_cola_visitada == HIGH_QUEUE
                              ? high_queue
                              : low_queue,
@@ -122,11 +123,13 @@ void scheduler(Queue *high_queue, Queue *low_queue, Process **cpu_process,
           (*cpu_process)->estado = WAITING;
           (*cpu_process)->quantum = quantum;
           (*cpu_process)->current_io_wait_time = (*cpu_process)->io_wait_time;
+          (*cpu_process)->t_LCPU = tick;
           queue_insert_max(low_queue, *cpu_process, (*cpu_process)->priority);
         } else {
           // El proceso termina su ejecución
           (*cpu_process)->estado = FINISHED;
           *procesos_restantes -= 1;
+          (*cpu_process)->t_LCPU = tick;
           add_finished_process(finished_list, *cpu_process);
         }
       }
@@ -147,6 +150,7 @@ void scheduler(Queue *high_queue, Queue *low_queue, Process **cpu_process,
           (*cpu_process)->quantum =
               q; ////////////////////////////////////////////////////////////////////////////////////////////////////77
           (*cpu_process)->current_io_wait_time = (*cpu_process)->io_wait_time;
+          (*cpu_process)->t_LCPU = tick;
           queue_insert_max((*cpu_process)->ultima_cola_visitada == HIGH_QUEUE
                                ? high_queue
                                : low_queue,
@@ -155,6 +159,7 @@ void scheduler(Queue *high_queue, Queue *low_queue, Process **cpu_process,
           // El proceso termina su ejecución
           (*cpu_process)->estado = FINISHED;
           *procesos_restantes -= 1;
+          (*cpu_process)->t_LCPU = tick;
           add_finished_process(finished_list, *cpu_process);
         }
         *cpu_process = NULL;
