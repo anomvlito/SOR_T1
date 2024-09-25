@@ -14,29 +14,29 @@ Para esta tarea, asumimos que no nos están pidiendo ejecutar los procesos con r
 
 - Tener en consideración que si se están ejecutando procesos en la cola Low, hay que estar atentos si es necesario pasar estos procesos a la cola High si se cumple para este proceso que, `2 * Tdeadline < Tactual − TLCPU`, este proceso sube a la cola High, y en el próximo bloque tick este proceso tendrá prioridad por sobre los otros procesos.
 
-### - Sobre el estado `Ready`:
+### - Sobre el estado `READY`:
 
-- Si un proceso llega por primera vez al scheduler, lo hace en estado `Ready`, además, por enunciado va directamente a la cola High. 
+- Si un proceso llega por primera vez al scheduler, lo hace en estado `READY`, además, por enunciado va directamente a la cola High. 
 
-- Si existe otro proceso ocupando la **CPU** y no la cede, los procesos en estado `Ready` al no ser seleccionado para ser llevados y ejecutados en CPU, se mantiendran en estado `Ready`, ademas:
+- Si existe otro proceso ocupando la **CPU** y no la cede, los procesos en estado `READY` al no ser seleccionado para ser llevados y ejecutados en CPU, se mantiendran en estado `READY`, ademas:
 
-    - se le suma una unidad de Waiting time.
+    - se le suma una unidad de `WAITING` time.
 
     - se le suma una unidad de response time (el tiempo que tardo en entrar por primera vez a la CPU), hasta que el valor de current_burst 
 
-    - si el proceso pasa de estado `Ready` a `Running`, este es seleccionado para ser llevado a la cpu, pasando a estado , se le reste una unidad de waiting time ya que por construccion del scheduler, antes de este analisis se actualizan todos los procesos que estan en estado ready mientras la cpu esta ocupada.
+    - si el proceso pasa de estado `READY` a `RUNNING`, este es seleccionado para ser llevado a la cpu, pasando a estado , se le reste una unidad de `WAITING` time ya que por construccion del scheduler, antes de este analisis se actualizan todos los procesos que estan en estado ready mientras la cpu esta ocupada.
 
-### - Sobre el estado `Waiting`:
+### - Sobre el estado ``WAITING``:
 
-- Un proceso no puede estar en estado `Waiting` sin haber ejecutado por completo su primera ráfaga de CPU.
+- Un proceso no puede estar en estado ``WAITING`` sin haber ejecutado por completo su primera ráfaga de CPU.
 
-- Si un proceso ya ejecuto "quemo" su primera rafaga de cpu por completo, cuando este en estado `Waiting`, pasara que:
+- Si un proceso ya ejecuto "quemo" su primera rafaga de cpu por completo, cuando este en estado ``WAITING``, pasara que:
 
-    - se le suma una unidad de Waiting time.
+    - se le suma una unidad de `WAITING` time.
 
-    - se le suma 1 y al current_io_wait_time y al igualarse con io_wait_time se pasa a estado `Ready`.
+    - se le suma 1 y al current_io_wait_time y al igualarse con io_wait_time se pasa a estado `READY`.
 
-    - Si justo cuando pasa a estado `Ready` y este es seleccionado para ser llevado a la cpu, pasando a estado `Running`, el mismo scheduler es capas de controlar las unidades de waiting time sumadas en cierta parte del codigo, esto esta referenciado en el tercer elemento listado, del segundo elemento listados de "sobre el estado ready". 
+    - Si justo cuando pasa a estado `READY` y este es seleccionado para ser llevado a la cpu, pasando a estado `RUNNING`, el mismo scheduler es capas de controlar las unidades de `WAITING` time sumadas en cierta parte del codigo, esto esta referenciado en el tercer elemento listado, del segundo elemento listados de "sobre el estado ready". 
 
 
 ################
@@ -77,7 +77,7 @@ BUSCAR UNA MANERA DE HACERLO Y QUE SEA INTELIGNTE
 - **Interrupciones** `int interrupciones`
 - **Turnaround time** `int turnaround_time` // termino – t inicio
 - **Response time** `int response_time` // tiempo que tardo en entrar por primera vez a la CPU
-- **Waiting time** `int waiting_time` // numero de veces que se encuentre en estado waiting y ready (sin contar ready cuando pasa a running)
+- **`WAITING` time** `int waiting_time` // numero de veces que se encuentre en estado `WAITING` y ready (sin contar ready cuando pasa a running)
 - **Suma deadline** `int deadline_sum`
 - **num_current_complete_burst** `int num_current_complete_burst` // para saber si es su primera rafaga, y su ultima para pasar a Finished
 - **Current Burst** `int current_burst` // para saber si sale de la CPU
@@ -105,13 +105,33 @@ ver si descartar:
 
 ## Queue 
 
-#  Rosario, favor en esta parte explicar haces uso de heap para el manejo de la prioridad, en el sentido más practico 
+se va a ORDENAR COLA POR PRIORIDAD, con insertion sort.
+
+
 
 ## **Funciones asociadas a cola de prioridad**
+### Insert High Queue
 
-### ORDENAR COLA POR PRIORIDAD: 
-   
-    - insertion sort, seleccionando solo los procesos con estado `Ready`. Y contador cada vez q se selecciona un proceso. Si contador = 0, no hay ready, si es 0<, current process in cpu = process, process in cpu = true.
+- **Process Quantum**: `2 * quantum`
+- **Action**: Agregar a la cola High Queue
+
+### Insert Low Queue
+
+- **Process Quantum**: `quantum`
+- **Action**: Agregar a la cola Low Queue
+
+
+
+### Ordenar procesos con estado `READY`
+
+- Utilizar insertion sort, seleccionando solo los procesos con estado `READY` de la cola. 
+- el con mayor prioridad es el que tenga mayor:
+    - (Tactual − TLCPU1) − Tdeadline . 
+
+- Si hay un empate en el deadline, se debe escoger el que tenga menor PID.  
+
+Un proceso en estado RUNNING solo sale de la CPU si se acaba su quantum o cede la CPU.
+
 
 
 
@@ -120,44 +140,39 @@ ver si descartar:
 ## 1) Se lee la primera línea de input:
 
 - Se carga el quantum *q* asociado al scheduler, el cual se utilizará en ambas colas. Por enunciado, la cola High tendrá el doble de quantum que la cola Low: Quantum High = 2q, Quantum Low = q.
-
+- Procesos restantes = N procesos 
 ## 2) Se leen las líneas de input posteriores a la primera, donde encontraremos la información asociada a los procesos.
 
 - Se crean los procesos correspondientes al `struct process`, aun no se ingresan al Scheduler.
 - Hay que tener en consideración que cada proceso tiene un tiempo `T_INICIO`, el cual es el tiempo en el que el proceso entra a la cola por primera vez.
-
+- Se crean las colas high.
+- Se crean las colas low.
 - se llama y crea la lista de procesos finalizados, con sus funciones correspondientes
+- se crea  Process *cpu_process = NULL; que simula la cpu.
 
-## 3) Se inicializa el `Scheduler`.
+## 3) se crea un bucle que simula el paso del tiempo y en cada iteracion se aumenta en una unidad el tick que comienza en 0.
 
+  - Se ejecuta el `Scheduler`.
 
-
-
-## 4) Procesos empiezan a "competir" por el uso de la cpu
-
-
-## 5) Se completan de ejecutar todos los procesos y se genera un archivo outuput "informe" tal como se pide en el enunciado
-
-
-
-
-############################################### completar
-############################################### completar
-############################################### completar
-############################################### completar
-############################################### completar
+  - Verificar si todos los procesos han terminados, si es asi se genera un archivo outuput "informe" tal como se pide en el enunciado, tal que:
+    - si terminaron, verificando Procesos restantes = 0: 
+        - break al while
+    - si no terminaron:
+        - aumentar en una unidad el tick para la nueva iteracion del bucle.
 
 
-## x) Al no quedar procesos en las colas se asume que estos estan en la lista de procesos finalizados.
+## 4) si se rompio el bucle es por que terminaron de ejecutarse los procesos, por lo tanto ejecutar:
+    - walk_in_finished_processes(finished_list), aqui crea el informe correspondiente que escribira en el csv como output, esto se hace a traves de la funcion  walk_in_finished_processes, la cual recorrera todos los procesos terminados y tomara los atributos de cada proceso 
 
-    - se crea el informe correspondiente que escribira en el csv como output, esto se hace a traves de la funcion  walk_in_finished_processes, la cual recorrera todos los procesos terminados y tomara los atributos de cada proceso 
+
+## 5) Liberar la memoria
 
 
 ## Scheduler
 
 Creeamos la función Scheduler que controla todo lo que pasa en cada intervalo tick de tiempo. 
 
-<!-- - si se libera la cpu tener atención con los procesos que terminan su espera i/o_waiting, ya que pasarian de estado waiting a ready y podrian tener mayor prioridad que otros elementos en la misma cola que ya estaban en estado ready. -->
+<!-- - si se libera la cpu tener atención con los procesos que terminan su espera i/o_waiting, ya que pasarian de estado `WAITING` a ready y podrian tener mayor prioridad que otros elementos en la misma cola que ya estaban en estado ready. -->
 
 - Comparamos prioridad de procesos en esta prioridad:
 
@@ -170,28 +185,27 @@ Creeamos la función Scheduler que controla todo lo que pasa en cada intervalo t
     - si la cola a comparar no esta vacia, solo se comparan los procesos en estado ready
 
 
-## **Flujo del cheduler**
+## **Funcion scheduler**
 
 Por cada tick, el scheduler realiza las siguientes tareas, en el orden indicado:  
 
-1) Actualizar los procesos que hayan terminado su tiempo de espera de I/O de WAITING a READY.  
+1) Actualizar los procesos que hayan terminado su tiempo de espera de I/O de `WAITING` a READY.  
 
     -  Iterar sobre cola high y low y revisar io_wait_time- current io_wait_time , si esto llega a ser = 0  pasara a estado ready.
-        - esto se hace como fue mencionado anteriormente "se le suma 1 y al current_io_wait_time y al igualarse con io_wait_time se pasa a estado `Ready`".
+        - esto se hace como fue mencionado anteriormente "se le suma 1 y al current_io_wait_time y al igualarse con io_wait_time se pasa a estado `READY`".
 
 2) Si hay un proceso en estado RUNNING, actualizar su estado según corresponda. Esto podría incluir sacarlo de la CPU si su quantum ha expirado o ha terminado su rafaga de ejecucio. Esto pasa cuando (*cpu_process != NULL) es true (la cpu esta ocupada) y por consiguiente:
 
-    - Actualizar sus variables quantum, current burst, num_current_complete_burst y estado(según burst= wait o quantum=ready).
-
-    - se resta una unidad de quantum
-    - se suma una unidad a current burst
+    - Actualizar sus variables quantum, current burst, num_current_complete_burst y estado(según burst= wait o quantum=ready), por lo tanto:
+        - se resta una unidad de quantum
+        - se suma una unidad a current burst
     
 
     - Si no queda quantum: <!--if-->
-        - si ({burst_time-current_burst} > 0) (el proceso es interrumpido):  <!--if-->
+        - si ({burst_time-current_burst} > 0) :  <!-- el proceso es interrumpido, hacer esto dentro de un if-->
             - se suma una unidad a interrupciones. <!-- muy importante-->
 
-            - proceso sigue en estado `Ready`.
+            - proceso sigue en estado `READY`.
 
             - reiniciar su quantum, con el valor de la cola de la que proviene.
 
@@ -199,56 +213,79 @@ Por cada tick, el scheduler realiza las siguientes tareas, en el orden indicado:
 
             - se libera la cpu con *cpu_process = NULL;
 
-        - si ({burst_time-current_burst} = 0) (la rafaga en la que esta ha terminado): <!--else if-->
+        - si ({burst_time-current_burst} = 0) : <!-- la rafaga en la que esta ha terminado, hacer esto dentro de un else if-->
             <!-- muy importante-->
             - aumentar en una unidad num_current_complete_burst <!-- muy importante-->
             <!-- muy importante-->
-            - si ({num_bursts_solicitados_por_proceso -num_current_complete_burst} > 0) :
+            
+            - si ({num_bursts_solicitados_por_proceso -num_current_complete_burst} > 0): <!-- aun quedan rafagas por quemar -->
+                - proceso cambia a estado ``WAITING``.
+
+                - reiniciar su quantum, con el valor de la cola low
 
                 - se incorpora a la cola low <!-- muy importante-->
 
                 - se libera la cpu con *cpu_process = NULL;
 
-            - si ({num_bursts_solicitados_por_procesos -num_current_complete_burst} = 0)  
-            (el proceso termina su ejecución): <!--else if-->
-                - proceso cambia a estado `Finished`.
+            - si ({num_bursts_solicitados_por_procesos -num_current_complete_burst} = 0): <!-- el proceso termina su ejecución, hacer esto dentro de un else if-->
+                - proceso cambia a estado `FINISHED`.
+
+                - restar una unidad  a Procesos restantes.
+
                 - es agregado al arreglo de procesos terminados Finished processes.
+
                 - se libera la cpu con *cpu_process = NULL; (recordatorio para fabian, ojo no se termina el scheduler solo queda libre para prepararse para la proxima ejecución).
 
-    - Si le queda quantum: <!--else if-->
-        - si ({burst_time-current_burst} > 0) (la rafaga en la que esta no ha terminado): <!--if-->
+    - Si le queda quantum: <!--hacer esto dentro de un else if-->
+        - si ({burst_time-current_burst} > 0) (la rafaga en la que esta no ha terminado): <!-- el proceso es interrumpido, hacer esto dentro de un if-->
             - mantenerlo en la cpu.
-            - proceso sigue en estado `Running`.
-        - si ({burst_time-current_burst} = 0) (la rafaga en la que esta ha terminado): <!--else if-->
+
+            - proceso sigue en estado `RUNNING`.
+
+            - no liberar la cpu.
+
+        - si ({burst_time-current_burst} = 0) (la rafaga en la que esta ha terminado): <!--  hacer esto dentro de un else if-->
             <!-- muy importante-->
             - aumentar en una unidad num_bursts_solicitados_por_proceso <!-- muy importante-->
             <!-- muy importante-->
-            - si ({num_bursts_solicitados_por_proceso -num_current_complete_burst} > 0) :  <!--if-->
-                
-                - proceso sigue en estado `Ready`.
-                - se ingresa a la cola de la que proviene. <!-- muy importante-->
-                <!-- muy importante-->
-                - podriamos agregar el atributo ultima cola visitada. <!-- muy importante-->
-                <!-- muy importante-->
+
+            - si ({num_bursts_solicitados_por_proceso -num_current_complete_burst} > 0): <!-- aun quedan rafagas por quemar -->
+                - proceso cambia a estado ``WAITING``.
+
+                - reiniciar su quantum, con el valor de la cola de la que proviene.
+
+                - se incorpora a la de la que proviene.
+
                 - se libera la cpu con *cpu_process = NULL;
-                
-            - si ({num_bursts_solicitados_por_proceso -num_current_complete_burst} = 0)  (el proceso termina su ejecución): <!--else if-->
-                - proceso cambia a estado `Finished`.
+
+            - si ({num_bursts_solicitados_por_proceso -num_current_complete_burst} = 0)  (el proceso termina su ejecución): <!-- el proceso es interrumpido, hacer esto dentro de un else if-->
+                - proceso cambia a estado `FINISHED`.
+                - restar una unidad  a Procesos restantes
+
                 - es agregado al arreglo de procesos terminados Finished processes.
+                
                 - se libera la cpu con *cpu_process = NULL; (recordatorio para fabian, ojo no se termina el scheduler solo queda libre para prepararse para la proxima ejecución).
             
 
-
-
-    - si no le queda quantum 
-    - si la rafaga en la que esta no ha terminado y se acabo su quantum, el proceso es interrumpido, por lo tanto:
-        - sumar una unidad a interrupciones. 
-        - mover a cola low, por haber consumido su quantum.
-            
-    - Ver si ha quemando todas sus rafagas, osea que si num_current_complete_burst = 0 hay que actualizar `*cpu_process = NULL` y ademas llevar el proceso al arreglo de procesos finalizados finished_processes.
         
-3)
+3) Ingresar los procesos a las colas segun corresponda:  
+    - 3.1 Si un proceso salió ́de la CPU, ingresarlo a la cola que corresponda.  <!-- atendido en el punto 2) -->
+    - 3.2  Para cada proceso p, comprobar si tick = T inicio e ingresarlo a la cola High, por lo tanto:
+        - se itera sobre los procesos  
 
-4)
+    - 3.3  Para cada proceso de la cola Low, revisar si se cumple la condición para subir a la cola High y cambiarlos de cola segun corresponda. Iterar procesos cola low y ver si 2 ∗ Tdeadline < Tactual − TLC P U, pasar a high si corresponde 
 
+4) Si no hay un proceso en estado `RUNNING`, osea que si la cpu esta libre, Seleccionar próximo proceso.
+
+Los procesos de la cola High siempre tienen prioridad por sobre la cola Low.  
+
+ Ingresar el proceso de mayor prioridad en estado READY a la CPU, esto implica ignorar a todos los que se encuentren en estado `WAITING`, sin moverlos de su posición ́ atual.  
+
+ - Si *cpu_process = NULL Revisar cola high: 
+    - si size = 0; revisar cola low.  
+    - ORDENAR COLA POR PRIORIDAD Interar los procesos extraer el que tenga el mayor valor de :
+        (Tactual − TLCPU1) − Tdeadline mayor.
+    - Al seleccionar un proceso para ser llevado a la CPU, verifica si es la primera vez que ingresa a RUNNING. Si es así, calcula el response_time de la siguiente forma:
+        - si(process->num_current_complete_burst == 0):
+            - process->response_time = tick - process->T_INICIO;
 
