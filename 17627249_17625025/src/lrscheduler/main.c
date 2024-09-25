@@ -211,7 +211,8 @@ int main(int argc, char const *argv[]) {
   int tick = 0;
   int Numero_de_procesos = input_file->len;
 
-  Process **processes = NULL;
+  Process **processes = NULL; // Lista de procesos
+
   Process *cpu_process = NULL;
 
   // ## 1) Se lee la primera línea de input:

@@ -68,7 +68,7 @@ BUSCAR UNA MANERA DE HACERLO Y QUE SEA INTELIGNTE
 - **Nombre** `char nombre[10]`
 - **Pid** `int pid`
 - **Burst time** `int burst_time` // Tiempo de ejecucion por rafaga
-- **N bursts** `int num_bursts`
+- **num_bursts_solicitados_por_proceso** `int num_bursts_solicitados_por_proceso`
 - **Io wait time** `int io_wait_time`
 - **Deadline** `int deadline`
 - **Estado** `estado_t estado`
@@ -79,7 +79,7 @@ BUSCAR UNA MANERA DE HACERLO Y QUE SEA INTELIGNTE
 - **Response time** `int response_time` // tiempo que tardo en entrar por primera vez a la CPU
 - **Waiting time** `int waiting_time` // numero de veces que se encuentre en estado waiting y ready (sin contar ready cuando pasa a running)
 - **Suma deadline** `int deadline_sum`
-- **N Bursts restantes** `int n_burst_restante` // para saber si es su primera rafaga, y su ultima para pasar a finished
+- **num_current_complete_burst** `int num_current_complete_burst` // para saber si es su primera rafaga, y su ultima para pasar a Finished
 - **Current Burst** `int current_burst` // para saber si sale de la CPU
 - **Current io wait time** `int current_io_wait_time`
 
@@ -181,34 +181,60 @@ Por cada tick, el scheduler realiza las siguientes tareas, en el orden indicado:
 
 2) Si hay un proceso en estado RUNNING, actualizar su estado según corresponda. Esto podría incluir sacarlo de la CPU si su quantum ha expirado o ha terminado su rafaga de ejecucio. Esto pasa cuando (*cpu_process != NULL) es true (la cpu esta ocupada) y por consiguiente:
 
-    - Actualizar sus variables quantum, current burst, num_bursts y estado(según burst= wait o quantum=ready).
+    - Actualizar sus variables quantum, current burst, num_current_complete_burst y estado(según burst= wait o quantum=ready).
 
     - se resta una unidad de quantum
     - se suma una unidad a current burst
     
 
     - Si no queda quantum: <!--if-->
-        - si ({burst_time-current_burst} > 0) (la rafaga en la que esta no ha terminado): <!--if-->
-            - sigue en estado `Running`.
-            - reiniciar su quantum, con el valor del quantum asociado a la cola low.
-            - llevarlo a la cola low
+        - si ({burst_time-current_burst} > 0) (el proceso es interrumpido):  <!--if-->
+            - se suma una unidad a interrupciones. <!-- muy importante-->
+
+            - proceso sigue en estado `Ready`.
+
+            - reiniciar su quantum, con el valor de la cola de la que proviene.
+
+            - se ingresa a la cola de la que proviene.
+
+            - se libera la cpu con *cpu_process = NULL;
+
         - si ({burst_time-current_burst} = 0) (la rafaga en la que esta ha terminado): <!--else if-->
+            <!-- muy importante-->
+            - aumentar en una unidad num_current_complete_burst <!-- muy importante-->
+            <!-- muy importante-->
+            - si ({num_bursts_solicitados_por_proceso -num_current_complete_burst} > 0) :
+
+                - se incorpora a la cola low <!-- muy importante-->
+
+                - se libera la cpu con *cpu_process = NULL;
+
+            - si ({num_bursts_solicitados_por_procesos -num_current_complete_burst} = 0)  
+            (el proceso termina su ejecución): <!--else if-->
+                - proceso cambia a estado `Finished`.
+                - es agregado al arreglo de procesos terminados Finished processes.
+                - se libera la cpu con *cpu_process = NULL; (recordatorio para fabian, ojo no se termina el scheduler solo queda libre para prepararse para la proxima ejecución).
 
     - Si le queda quantum: <!--else if-->
         - si ({burst_time-current_burst} > 0) (la rafaga en la que esta no ha terminado): <!--if-->
             - mantenerlo en la cpu.
-            - sigue en estado `Running`.
+            - proceso sigue en estado `Running`.
         - si ({burst_time-current_burst} = 0) (la rafaga en la que esta ha terminado): <!--else if-->
-            - si ({num_bursts -n_burst} > 0)  (el proceso es interrumpido):  <!--if-->
-                <!-- ############### -->
-                - se suma una unidad a interrupciones.
-                - sigue en estado `Ready`.
-                - se ingresa a la cola de la que proviene.
-                - podriamos agregar el atributo ultima cola visitada.
-                <!-- ############### -->
-            - si ({num_bursts -n_burst} = 0)  (el proceso termina su ejecución): <!--else if-->
-                - cambia a estado `FINISHED`.
-                - es agregado al arreglo de procesos terminados finished processes.
+            <!-- muy importante-->
+            - aumentar en una unidad num_bursts_solicitados_por_proceso <!-- muy importante-->
+            <!-- muy importante-->
+            - si ({num_bursts_solicitados_por_proceso -num_current_complete_burst} > 0) :  <!--if-->
+                
+                - proceso sigue en estado `Ready`.
+                - se ingresa a la cola de la que proviene. <!-- muy importante-->
+                <!-- muy importante-->
+                - podriamos agregar el atributo ultima cola visitada. <!-- muy importante-->
+                <!-- muy importante-->
+                - se libera la cpu con *cpu_process = NULL;
+                
+            - si ({num_bursts_solicitados_por_proceso -num_current_complete_burst} = 0)  (el proceso termina su ejecución): <!--else if-->
+                - proceso cambia a estado `Finished`.
+                - es agregado al arreglo de procesos terminados Finished processes.
                 - se libera la cpu con *cpu_process = NULL; (recordatorio para fabian, ojo no se termina el scheduler solo queda libre para prepararse para la proxima ejecución).
             
 
@@ -219,7 +245,7 @@ Por cada tick, el scheduler realiza las siguientes tareas, en el orden indicado:
         - sumar una unidad a interrupciones. 
         - mover a cola low, por haber consumido su quantum.
             
-    - Ver si ha quemando todas sus rafagas, osea que si n_burst_restante = 0 hay que actualizar `*cpu_process = NULL` y ademas llevar el proceso al arreglo de procesos finalizados finished_processes.
+    - Ver si ha quemando todas sus rafagas, osea que si num_current_complete_burst = 0 hay que actualizar `*cpu_process = NULL` y ademas llevar el proceso al arreglo de procesos finalizados finished_processes.
         
 3)
 
