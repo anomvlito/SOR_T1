@@ -80,6 +80,20 @@ void scheduler(Queue *high_queue, Queue *low_queue, Process **cpu_process,
   update_waiting_processes(high_queue, tick);
   update_waiting_processes(low_queue, tick);
 
+  for (int i = 0; i < high_queue->size; i++) {
+    Process *process = high_queue->nodes[i]->process;
+    if (process->estado == READY) {
+      process->waiting_time++; // Incrementar el waiting time
+    }
+  }
+
+  for (int i = 0; i < low_queue->size; i++) {
+    Process *process = low_queue->nodes[i]->process;
+    if (process->estado == READY) {
+      process->waiting_time++; // Incrementar el waiting time
+    }
+  }
+
   // 2) Si hay un proceso en estado `RUNNING`, actualizar su estado según
   // corresponda
   if (*cpu_process != NULL) {
@@ -157,6 +171,9 @@ void scheduler(Queue *high_queue, Queue *low_queue, Process **cpu_process,
       // la cola High
       process->quantum = 2 * q;
       queue_insert_max(high_queue, process, process->priority);
+      // Incrementar el waiting_time porque ingresó ready y no sera seleccionado
+      // en caso de ser seleccionado se decrementa y compensa más adelante
+      process->waiting_time++;
     }
   }
 
@@ -173,6 +190,9 @@ void scheduler(Queue *high_queue, Queue *low_queue, Process **cpu_process,
       if (next_process->num_current_complete_burst == 0) {
         next_process->response_time = tick - next_process->t_inicio;
       }
+      // compensar restando una unidad de waiting_time ya que fue seleccionado
+      // para la CPU
+      next_process->waiting_time--;
       *cpu_process = next_process;
     }
   }
