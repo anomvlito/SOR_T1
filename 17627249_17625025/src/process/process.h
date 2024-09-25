@@ -14,16 +14,20 @@
 // espera, etc.)
 
 typedef enum { RUNNING, READY, WAITING, FINISHED } estado_t;
+typedef enum { HIGH_QUEUE, LOW_QUEUE } ultima_cola_visitada_t;
 
 typedef struct process {
   char nombre[10];
   int pid;
+  int t_inicio;
   int burst_time;                         // Tiempo de ejecucion por rafaga
   int num_bursts_solicitados_por_proceso; //
   int io_wait_time;
   int deadline;
   estado_t estado;
+  ultima_cola_visitada_t ultima_cola_visitada;
   int quantum;
+  int t_LCPU;
   char queue[10];
   int interrupciones;
   int turnaround_time;

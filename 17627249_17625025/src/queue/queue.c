@@ -1,6 +1,6 @@
 #include "queue.h"
 
-Queue *queue_create(int size) {
+Queue *create_queue(int size) {
   Queue *queue = (Queue *)calloc(1, sizeof(Queue));
   queue->size = size;
   queue->capacity = 0;
