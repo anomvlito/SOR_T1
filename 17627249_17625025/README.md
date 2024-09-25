@@ -184,6 +184,11 @@ Creeamos la función Scheduler que controla todo lo que pasa en cada intervalo t
 
     - si la cola a comparar no esta vacia, solo se comparan los procesos en estado ready
 
+- Manejo del waiting_time:
+    - Para procesos que ingresan al estado READY: Cuando un proceso es agregado a la cola READY (en la cola high o low) y no es seleccionado para ejecutarse en la CPU durante ese tick, se incrementa su waiting_time en 1.
+    Esto ocurre cuando el proceso se mueve a READY pero no pasa a RUNNING en el mismo tick. Por ejemplo, un proceso que inicia en el tick = T_INICIO entra a READY pero su waiting_time se incrementa ya que no fue inmediatamente seleccionado.
+
+    - Para procesos que pasan a RUNNING: Al seleccionar un proceso para ejecutarse en la CPU (cambio de READY a RUNNING), se debe restar 1 al waiting_time para compensar el hecho de que fue seleccionado en ese tick. Esto asegura que el waiting_time refleja correctamente el tiempo total que el proceso esperó antes de ser ejecutado.
 
 ## **Funcion scheduler**
 
@@ -288,4 +293,8 @@ Los procesos de la cola High siempre tienen prioridad por sobre la cola Low.
     - Al seleccionar un proceso para ser llevado a la CPU, verifica si es la primera vez que ingresa a RUNNING. Si es así, calcula el response_time de la siguiente forma:
         - si(process->num_current_complete_burst == 0):
             - process->response_time = tick - process->T_INICIO;
+
+
+
+
 
