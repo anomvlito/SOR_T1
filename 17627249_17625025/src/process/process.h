@@ -22,6 +22,7 @@ typedef enum { HIGH_QUEUE, LOW_QUEUE } ultima_cola_visitada_t;
 typedef struct process {
   char nombre[10];
   int pid;
+  int t_inicio;
   int burst_time; // Tiempo de ejecucion por rafaga
   int num_bursts_solicitados_por_proceso; //
   int io_wait_time;
