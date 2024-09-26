@@ -1,4 +1,7 @@
 #pragma once
+#include <stdio.h>
+#include <stdbool.h>
+#include <stdlib.h>
 
 // Definir el struct Process:
 
@@ -38,13 +41,25 @@ typedef struct process {
   // cpu ANTES de actualizar su estado a running, reviar si es ready, si es asi
   // hay que restarle 1.
   int deadline_sum;
-  int num_current_complete_burst; // para saber si es su primera rafaga, y su
-                                  // ultima para pasar a finished
-  // int n_burst_restante; // para saber si es su primera rafaga, y su ultima
-  // para pasar a finished
-  int current_burst;        // para saber si sale de la CPU
-  int current_io_wait_time; // para saber cuando pueda pasar a READY, en cada
-                            // iteracion que esta en waiting se le suma 1 y al
+  int num_current_complete_burst; // para saber si es su primera rafaga, y su ultima para pasar a finished
+  int current_burst; // para saber si sale de la CPU 
+  int current_io_wait_time; // para saber cuando pueda pasar a READY, en cada iteracion que esta en waiting se le suma 1 y al 
   // igualarse con io_wait_time queda en ready
 
 } Process;
+
+typedef struct node {
+  Process *process;
+  struct node *next;
+  struct node *previous;
+} Node;
+
+typedef struct queue {
+    Node* first_process;
+    Node* last_process;
+    int len;
+    quantum;
+} Queue;
+
+
+
