@@ -17,6 +17,7 @@ Para esta tarea, asumimos que no nos están pidiendo ejecutar los procesos con r
 - Si un proceso llega por primera vez al scheduler, lo hace en estado `READY`, además, por enunciado va directamente a la cola High.
 - Si existe otro proceso ocupando la **CPU** y no la cede, los procesos en estado `READY` al no ser seleccionados para ser llevados y ejecutados en CPU, se mantendrán en estado `READY`, además:
     - Se le suma una unidad de `WAITING` time.
+    
     - Se le suma una unidad de response time (el tiempo que tardó en entrar por primera vez a la CPU), hasta que el valor de current_burst.
     - Si el proceso pasa de estado `READY` a `RUNNING`, este es seleccionado para ser llevado a la CPU, pasando a estado `RUNNING`, se le resta una unidad de `WAITING` time ya que por construcción del scheduler, antes de este análisis se actualizan todos los procesos que están en estado ready mientras la CPU está ocupada.
 
@@ -151,15 +152,15 @@ Por cada tick, el scheduler realiza las siguientes tareas, en el orden indicado:
          - Si (`burst_time - current_burst` > 0):
              - Se suma una unidad a interrupciones.
              - Proceso sigue en estado `READY`.
-             - Reiniciar su quantum, con el valor de la cola de la que proviene.
-             - Se ingresa a la cola de la que proviene.
+             - Reiniciar su quantum, con el valor de la cola low.
+             - Se ingresa a la cola low.
              - Se libera la CPU con `*cpu_process = NULL`.
          - Si (`burst_time - current_burst` = 0):
              - Aumentar en una unidad `num_current_complete_burst`.
              - Si (`num_bursts_solicitados_por_proceso - num_current_complete_burst` > 0):
                  - Proceso cambia a estado `WAITING`.
-                 - Reiniciar su quantum, con el valor de la cola low.
-                 - Se incorpora a la cola low.
+                 - Reiniciar su quantum, con el valor de la cola de la que proviene.
+                 - Se incorpora a la de la que proviene.
                  - Se libera la CPU con `*cpu_process = NULL`.
              - Si (`num_bursts_solicitados_por_procesos - num_current_complete_burst` = 0):
                  - Proceso cambia a estado `FINISHED`.
