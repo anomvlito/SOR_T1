@@ -72,7 +72,7 @@ Process *priority_process(Queue *high_queue, Queue *low_queue) {}
 
 void scheduler(Queue *high_queue, Queue *low_queue, Process **cpu_process,
                int tick, FinishedProcessList *finished_list,
-               int *procesos_restantes, int *Numero_de_procesos,
+               int *procesos_restantes, int *Numero_de_procesos, int *q,
                Process **processes) {
 
   // 1) Actualizar los procesos que hayan terminado su tiempo de espera de I/O
@@ -106,39 +106,10 @@ void scheduler(Queue *high_queue, Queue *low_queue, Process **cpu_process,
         // La ráfaga no ha terminado
         (*cpu_process)->interrupciones++; // Aumentar interrupciones
         (*cpu_process)->estado = READY;   // Proceso sigue en estado READY
-        (*cpu_process)->quantum =
-            (*cpu_process)->ultima_cola_visitada == HIGH_QUEUE ? 2 * q : q;
+        (*cpu_process)->quantum = q; // Reiniciar el quantum para la cola low
         (*cpu_process)->t_LCPU = tick;
-        queue_insert_max((*cpu_process)->ultima_cola_visitada == HIGH_QUEUE
-                             ? high_queue
-                             : low_queue,
-                         *cpu_process, (*cpu_process)->priority);
-      } else {
-        // La ráfaga ha terminado
-        (*cpu_process)->num_current_complete_burst++;
-        if ((*cpu_process)->num_bursts_solicitados_por_proceso -
-                (*cpu_process)->num_current_complete_burst >
-            0) {
-          // Aún quedan ráfagas por ejecutar
-          (*cpu_process)->estado = WAITING;
-          (*cpu_process)->quantum = quantum;
-          (*cpu_process)->current_io_wait_time = (*cpu_process)->io_wait_time;
-          (*cpu_process)->t_LCPU = tick;
-          queue_insert_max(low_queue, *cpu_process, (*cpu_process)->priority);
-        } else {
-          // El proceso termina su ejecución
-          (*cpu_process)->estado = FINISHED;
-          *procesos_restantes -= 1;
-          (*cpu_process)->t_LCPU = tick;
-          add_finished_process(finished_list, *cpu_process);
-        }
-      }
-      *cpu_process = NULL;
-    } else {
-      // Caso 2b: Si le queda quantum
-      if ((*cpu_process)->burst_time - (*cpu_process)->current_burst > 0) {
-        // La ráfaga en la que está no ha terminado
-        (*cpu_process)->estado = RUNNING;
+        queue_insert_max(low_queue, *cpu_process, (*cpu_process)->priority);
+        *cpu_process = NULL; // Liberar la CPU
       } else {
         // La ráfaga ha terminado
         (*cpu_process)->num_current_complete_burst++;
@@ -148,21 +119,57 @@ void scheduler(Queue *high_queue, Queue *low_queue, Process **cpu_process,
           // Aún quedan ráfagas por ejecutar
           (*cpu_process)->estado = WAITING;
           (*cpu_process)->quantum =
-              q; ////////////////////////////////////////////////////////////////////////////////////////////////////77
+              (*cpu_process)->ultima_cola_visitada == HIGH_QUEUE ? 2 * q : q;
+          // linea anterior reinicia quantum basado en la cola de origen con
+          // opeador ternario
           (*cpu_process)->current_io_wait_time = (*cpu_process)->io_wait_time;
           (*cpu_process)->t_LCPU = tick;
           queue_insert_max((*cpu_process)->ultima_cola_visitada == HIGH_QUEUE
                                ? high_queue
                                : low_queue,
                            *cpu_process, (*cpu_process)->priority);
+          *cpu_process = NULL; // Liberar la CPU
         } else {
           // El proceso termina su ejecución
           (*cpu_process)->estado = FINISHED;
           *procesos_restantes -= 1;
           (*cpu_process)->t_LCPU = tick;
           add_finished_process(finished_list, *cpu_process);
+          *cpu_process = NULL; // Liberar la CPU
         }
-        *cpu_process = NULL;
+      }
+    } else {
+      // Caso 2b: Si le queda quantum
+      if ((*cpu_process)->burst_time - (*cpu_process)->current_burst > 0) {
+        // La ráfaga en la que está no ha terminado
+        (*cpu_process)->estado = RUNNING; // Mantenerlo en la CPU
+      } else {
+        // La ráfaga ha terminado
+        (*cpu_process)->num_current_complete_burst++;
+        if ((*cpu_process)->num_bursts_solicitados_por_proceso -
+                (*cpu_process)->num_current_complete_burst >
+            0) {
+          // Aún quedan ráfagas por ejecutar
+          (*cpu_process)->estado = WAITING;
+          (*cpu_process)->quantum =
+              (*cpu_process)->ultima_cola_visitada == HIGH_QUEUE ? 2 * q : q;
+          // linea anterior reinicia quantum basado en la cola de origen con
+          // opeador ternario
+          (*cpu_process)->current_io_wait_time = (*cpu_process)->io_wait_time;
+          (*cpu_process)->t_LCPU = tick;
+          queue_insert_max((*cpu_process)->ultima_cola_visitada == HIGH_QUEUE
+                               ? high_queue
+                               : low_queue,
+                           *cpu_process, (*cpu_process)->priority);
+          *cpu_process = NULL; // Liberar la CPU
+        } else {
+          // El proceso termina su ejecución
+          (*cpu_process)->estado = FINISHED;
+          *procesos_restantes -= 1;
+          (*cpu_process)->t_LCPU = tick;
+          add_finished_process(finished_list, *cpu_process);
+          *cpu_process = NULL; // Liberar la CPU
+        }
       }
     }
   }
@@ -228,8 +235,7 @@ int main(int argc, char const *argv[]) {
   // - Se carga el tiempo de inicio *T inicio* asociado al scheduler, el cual
   // se utilizará para determinar si un proceso debe ingresar a la cola High.
 
-  int quantum = atoi(input_file->lines[0][0]);
-  const int q = quantum; // Define q as the quantum value
+  int q = atoi(input_file->lines[0][0]); // Define quantum como q
 
   // se crean las colas para pasarlas al scheduler, cada cola recibe el
   // quantum, high recibe 2*quantum y low recibe quantum
@@ -278,7 +284,7 @@ int main(int argc, char const *argv[]) {
     }
     // Ejecutar el scheduler
     scheduler(high_queue, low_queue, &cpu_process, tick, finished_list,
-              &procesos_restantes, &Numero_de_procesos, processes);
+              &procesos_restantes, &Numero_de_procesos, &q, processes);
 
     // Verificar si todos los procesos han terminado
     if (Numero_de_procesos == 0) {
