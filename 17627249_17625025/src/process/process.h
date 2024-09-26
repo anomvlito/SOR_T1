@@ -1,4 +1,7 @@
 #pragma once
+#include <stdio.h>
+#include <stdbool.h>
+#include <stdlib.h>
 
 // Definir el struct Process:
 
@@ -14,16 +17,19 @@
 // espera, etc.)
 
 typedef enum { RUNNING, READY, WAITING, FINISHED } estado_t;
+typedef enum { HIGH_QUEUE, LOW_QUEUE } ultima_cola_visitada_t;
 
 typedef struct process {
   char nombre[10];
   int pid;
   int burst_time; // Tiempo de ejecucion por rafaga
-  int num_bursts; //
+  int num_bursts_solicitados_por_proceso; //
   int io_wait_time;
   int deadline;
   estado_t estado;
+  ultima_cola_visitada_t ultima_cola_visitada;
   int quantum;
+  int t_LCPU; 
   char queue[10];
   int interrupciones;
   int turnaround_time;
@@ -32,9 +38,25 @@ typedef struct process {
   //sumar +1 siempre que este en ready y waiting, al ingresar un proceso a la cpu ANTES de actualizar su estado a running, reviar
   //si es ready, si es asi hay que restarle 1.
   int deadline_sum;
-  int n_burst_restante; // para saber si es su primera rafaga, y su ultima para pasar a finished
+  int num_current_complete_burst; // para saber si es su primera rafaga, y su ultima para pasar a finished
   int current_burst; // para saber si sale de la CPU 
   int current_io_wait_time; // para saber cuando pueda pasar a READY, en cada iteracion que esta en waiting se le suma 1 y al 
   // igualarse con io_wait_time queda en ready
 
 } Process;
+
+typedef struct node {
+  Process *process;
+  struct node *next;
+  struct node *previous;
+} Node;
+
+typedef struct queue {
+    Node* first_process;
+    Node* last_process;
+    int len;
+    quantum;
+} Queue;
+
+
+
