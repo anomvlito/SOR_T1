@@ -21,17 +21,14 @@ void imprime_inicio(char *file_name, InputFile *input_file) {
   }
 }
 
-// 1 crear funcion que revisa si  hay Actualizar los procesos que hayan
-// terminado su tiempo de espera de I/O de WAITING a READY.
-
 void update_waiting_processes(Queue *queue, int Tactual) {
   for (int i = 0; i < queue->capacity; i++) {
     Node *node = queue->nodes[i];
     Process *actual_pivot = get_process_by_id(node->id);
     if (actual_pivot->estado == WAITING &&
-        !actual_pivot->primera_rafaga_de_cpu) {
-      actual_pivot->io_wait_restante--;
-      if (actual_pivot->io_wait_restante == 0) {
+        (actual_pivot->current_io_wait_time > 0)) {
+      actual_pivot->current_io_wait_time--;
+      if (actual_pivot->current_io_wait_time == 0) {
         actual_pivot->estado = READY;
         // Recalcular la prioridad
         int new_priority =
@@ -45,145 +42,169 @@ void update_waiting_processes(Queue *queue, int Tactual) {
   }
 }
 
-// 2 crear funcion que revisa Si hay un proceso en estado RUNNING, actualizar su
-// estado segun corresponda. Esto podrıa incluir sacarlo de la CPU si su quantum
-// ha expirado o ha terminado su rafaga de ejecucion.
-
-// 3 crear funcion que ingresa los procesos a las colas del scheduler
-
-//  3.1) Si un proceso salió de la CPU, ingresarlo a la cola que corresponda.
-//  3.2) Para cada proceso p, comprobar si tick = T inicio e ingresarlo a la
-//  cola High. 3.3) Para cada proceso de la cola Low, revisar si se cumple la
-//  condición para subir a la cola High y cambiarlos de cola según corresponda.
-
-// Si no hay un proceso en estado RUNNING, ingresar el proceso de mayor
-// prioridad en estado READY a la CPU, esto implica ignorar a todos los que se
-// encuentren en estado WAITING, sin moverlos de su posición actual.
-
 //
 void move_processes_from_low_to_high(Queue *low_queue, Queue *high_queue,
-                                     int Tactual) {
-  // Verificar si hay que mover procesos de la cola baja a la alta
-  for (int i = 0; i < low_queue->capacity; i++) {
-    Process *process = low_queue->nodes[i]->process;
-    if (process->estado != READY) {
-      if (2 * process->t_deadline < (Tactual - process->t_LCPU)) {
-        // Mover proceso a la cola de alta prioridad
-        int priority = low_queue->nodes[i]->priority;
-        // Remover de la cola baja
-        Node *node = low_queue->nodes[i];
-        low_queue->nodes[i] = low_queue->nodes[low_queue->capacity - 1];
-        low_queue->capacity--;
-        build_max_heap(low_queue);
-        // Insertar en la cola alta
-        queue_insert_max(high_queue, process, priority);
-        free(node);
-        i--; // Ajustar el índice
-      }
-    }
-  }
-}
+                                     int tick) {}
 
 // Función para actualizar el estado de los procesos que han terminado su tiempo
 // de espera de I/O
-void update_priorities(Queue *high_queue, Queue *low_queue, int Tactual) {
-  // Actualizar prioridades en la cola de alta prioridad
-  for (int i = 0; i < high_queue->capacity; i++) {
-    Process *process = high_queue->nodes[i]->process;
-    if (process->estado == READY) {
-      int priority = (Tactual - process->t_LCPU) - process->deadline;
-      high_queue->nodes[i]->priority = priority;
-    }
-  }
-  build_max_heap(high_queue);
-
-  // Actualizar prioridades en la cola de baja prioridad
-  for (int i = 0; i < low_queue->capacity; i++) {
-    Process *process = low_queue->nodes[i]->process;
-    if (process->estado == READY) {
-      int priority = (Tactual - process->t_LCPU) - process->deadline;
-      low_queue->nodes[i]->priority = priority;
-    }
-  }
-  build_max_heap(low_queue);
+void update_waiting_processes(Queue *queue, int tick) {
+  // for (int i = 0; i < queue->capacity; i++) {
+  //   Node *node = queue->nodes[i];
+  //   Process *process = get_process_by_id(node->id);
+  //   if (process->estado == WAITING && process->current_io_wait_time > 0) {
+  //     process->current_io_wait_time--;
+  //     if (process->current_io_wait_time == 0) {
+  //       process->estado = READY;
+  //       // Recalcular la prioridad
+  //       int new_priority = (tick - process->t_LCPU) - process->deadline;
+  //       node->priority = new_priority;
+  //       // Re-heapificar desde el índice actual
+  //       max_percolate_up(queue, i);
+  //       max_percolate_down(queue, i);
+  //     }
+  //   }
+  // }
 }
 
 ///
-Process *select_next_process(Queue *high_queue, Queue *low_queue) {
-  // Intentar extraer de la cola de alta prioridad
-  Node *node = queue_extract_max(high_queue);
-  if (node != NULL) {
-    Process *process = get_process_by_id(node->id);
-    free(node);
-    return process;
-  }
-
-  // Si no hay procesos en la cola alta, intentar con la cola baja
-  node = queue_extract_max(low_queue);
-  if (node != NULL) {
-    Process *process = get_process_by_id(node->id);
-    free(node);
-    return process;
-  }
-
-  // No hay procesos listos
-  return NULL;
-}
+Process *priority_process(Queue *high_queue, Queue *low_queue) {}
 
 void scheduler(Queue *high_queue, Queue *low_queue, Process **cpu_process,
-               int Tactual, FinishedProcessList *finished_list) {
-  // Actualizar procesos en WAITING
-  update_waiting_processes(high_queue, Tactual);
-  update_waiting_processes(low_queue, Tactual);
+               int tick, FinishedProcessList *finished_list,
+               int *procesos_restantes, int *Numero_de_procesos, int *q,
+               Process **processes) {
 
-  // Actualizar prioridades de los procesos
-  update_priorities(high_queue, low_queue, Tactual);
+  // 1) Actualizar los procesos que hayan terminado su tiempo de espera de I/O
+  // de `WAITING` a `READY`
+  update_waiting_processes(high_queue, tick);
+  update_waiting_processes(low_queue, tick);
 
-  // Mover procesos de la cola baja a la alta si corresponde
-  move_processes_from_low_to_high(low_queue, high_queue, Tactual);
-
-  // Actualizar proceso en RUNNING
-  if (*cpu_process != NULL) {
-    (*cpu_process)->quantum_restante--;
-    (*cpu_process)->burst_restante--;
-
-    if ((*cpu_process)->burst_restante == 0) {
-      (*cpu_process)->num_bursts--;
-      if ((*cpu_process)->num_bursts == 0) {
-        (*cpu_process)->estado = FINISHED;
-        (*cpu_process)->t_LCPU = Tactual + 1;
-        // Agregar a la lista de procesos finalizados
-        add_finished_process(finished_list, *cpu_process);
-        *cpu_process = NULL;
-      } else {
-        (*cpu_process)->estado = WAITING;
-        (*cpu_process)->io_wait_restante = (*cpu_process)->io_wait_time;
-        (*cpu_process)->primera_rafaga_de_cpu = false;
-        (*cpu_process)->t_LCPU = Tactual + 1;
-        *cpu_process = NULL;
-      }
-    } else if ((*cpu_process)->quantum_restante == 0) {
-      (*cpu_process)->estado = READY;
-      (*cpu_process)->t_LCPU = Tactual + 1;
-      int priority =
-          (Tactual + 1 - (*cpu_process)->t_LCPU) - (*cpu_process)->deadline;
-      // Mover a la cola baja
-      queue_insert_max(low_queue, (*cpu_process)->pid, priority);
-      *cpu_process = NULL;
+  for (int i = 0; i < high_queue->size; i++) {
+    Process *process = high_queue->nodes[i]->process;
+    if (process->estado == READY) {
+      process->waiting_time++; // Incrementar el waiting time
     }
   }
 
-  // Seleccionar próximo proceso si la CPU está libre
+  for (int i = 0; i < low_queue->size; i++) {
+    Process *process = low_queue->nodes[i]->process;
+    if (process->estado == READY) {
+      process->waiting_time++; // Incrementar el waiting time
+    }
+  }
+
+  // 2) Si hay un proceso en estado `RUNNING`, actualizar su estado según
+  // corresponda
+  if (*cpu_process != NULL) {
+    (*cpu_process)->quantum--;
+    (*cpu_process)->current_burst++;
+
+    // Caso 2a: Si no queda quantum
+    if ((*cpu_process)->quantum == 0) {
+      if ((*cpu_process)->burst_time - (*cpu_process)->current_burst > 0) {
+        // La ráfaga no ha terminado
+        (*cpu_process)->interrupciones++; // Aumentar interrupciones
+        (*cpu_process)->estado = READY;   // Proceso sigue en estado READY
+        (*cpu_process)->quantum = q; // Reiniciar el quantum para la cola low
+        (*cpu_process)->t_LCPU = tick;
+        queue_insert_max(low_queue, *cpu_process, (*cpu_process)->priority);
+        *cpu_process = NULL; // Liberar la CPU
+      } else {
+        // La ráfaga ha terminado
+        (*cpu_process)->num_current_complete_burst++;
+        if ((*cpu_process)->num_bursts_solicitados_por_proceso -
+                (*cpu_process)->num_current_complete_burst >
+            0) {
+          // Aún quedan ráfagas por ejecutar
+          (*cpu_process)->estado = WAITING;
+          (*cpu_process)->quantum =
+              (*cpu_process)->ultima_cola_visitada == HIGH_QUEUE ? 2 * q : q;
+          // linea anterior reinicia quantum basado en la cola de origen con
+          // opeador ternario
+          (*cpu_process)->current_io_wait_time = (*cpu_process)->io_wait_time;
+          (*cpu_process)->t_LCPU = tick;
+          queue_insert_max((*cpu_process)->ultima_cola_visitada == HIGH_QUEUE
+                               ? high_queue
+                               : low_queue,
+                           *cpu_process, (*cpu_process)->priority);
+          *cpu_process = NULL; // Liberar la CPU
+        } else {
+          // El proceso termina su ejecución
+          (*cpu_process)->estado = FINISHED;
+          *procesos_restantes -= 1;
+          (*cpu_process)->t_LCPU = tick;
+          add_finished_process(finished_list, *cpu_process);
+          *cpu_process = NULL; // Liberar la CPU
+        }
+      }
+    } else {
+      // Caso 2b: Si le queda quantum
+      if ((*cpu_process)->burst_time - (*cpu_process)->current_burst > 0) {
+        // La ráfaga en la que está no ha terminado
+        (*cpu_process)->estado = RUNNING; // Mantenerlo en la CPU
+      } else {
+        // La ráfaga ha terminado
+        (*cpu_process)->num_current_complete_burst++;
+        if ((*cpu_process)->num_bursts_solicitados_por_proceso -
+                (*cpu_process)->num_current_complete_burst >
+            0) {
+          // Aún quedan ráfagas por ejecutar
+          (*cpu_process)->estado = WAITING;
+          (*cpu_process)->quantum =
+              (*cpu_process)->ultima_cola_visitada == HIGH_QUEUE ? 2 * q : q;
+          // linea anterior reinicia quantum basado en la cola de origen con
+          // opeador ternario
+          (*cpu_process)->current_io_wait_time = (*cpu_process)->io_wait_time;
+          (*cpu_process)->t_LCPU = tick;
+          queue_insert_max((*cpu_process)->ultima_cola_visitada == HIGH_QUEUE
+                               ? high_queue
+                               : low_queue,
+                           *cpu_process, (*cpu_process)->priority);
+          *cpu_process = NULL; // Liberar la CPU
+        } else {
+          // El proceso termina su ejecución
+          (*cpu_process)->estado = FINISHED;
+          *procesos_restantes -= 1;
+          (*cpu_process)->t_LCPU = tick;
+          add_finished_process(finished_list, *cpu_process);
+          *cpu_process = NULL; // Liberar la CPU
+        }
+      }
+    }
+  }
+
+  // 3) Ingresar los procesos a las colas según corresponda, cola low fue
+  // tratada anteriormente
+  for (int i = 0; i < Numero_de_procesos; i++) {
+    Process *process = processes[i];
+    if (process->t_inicio == tick) {
+      // 3.2) Proceso ingresa por primera vez al scheduler en estado READY y a
+      // la cola High
+      process->quantum = 2 * q;
+      queue_insert_max(high_queue, process, process->priority);
+      // Incrementar el waiting_time porque ingresó ready y no sera seleccionado
+      // en caso de ser seleccionado se decrementa y compensa más adelante
+      process->waiting_time++;
+    }
+  }
+
+  // 3.3) Para cada proceso de la cola Low, revisar si se cumple la condición
+  // para subir a la cola High
+  move_processes_from_low_to_high(low_queue, high_queue, tick);
+
+  // 4) Si no hay un proceso en estado `RUNNING`, seleccionar el próximo proceso
+  // de mayor prioridad
   if (*cpu_process == NULL) {
-    Process *next_process = select_next_process(high_queue, low_queue);
+    Process *next_process = priority_process(high_queue, low_queue);
     if (next_process != NULL) {
       next_process->estado = RUNNING;
-      if (next_process->primera_rafaga_de_cpu ||
-          2 * next_process->deadline >= (Tactual - next_process->t_LCPU)) {
-        next_process->quantum_restante = HIGH_QUEUE_QUANTUM;
-      } else {
-        next_process->quantum_restante = LOW_QUEUE_QUANTUM;
+      if (next_process->num_current_complete_burst == 0) {
+        next_process->response_time = tick - next_process->t_inicio;
       }
+      // compensar restando una unidad de waiting_time ya que fue seleccionado
+      // para la CPU
+      next_process->waiting_time--;
       *cpu_process = next_process;
     }
   }
@@ -199,25 +220,28 @@ int main(int argc, char const *argv[]) {
   int tick = 0;
   int Numero_de_procesos = input_file->len;
 
-  Process **processes = NULL;
+  int procesos_restantes = Numero_de_procesos;
+
+  Process **processes = NULL; // Lista de procesos
+
   Process *cpu_process = NULL;
 
   // ## 1) Se lee la primera línea de input:
 
-  // - Se carga el quantum *q* asociado al scheduler, el cual se utilizará en
-  // ambas colas. Por enunciado, la cola High tendrá el doble de quantum que
-  // la cola Low: Quantum High = 2q, Quantum Low = q.
+  // - Se carga el quantum *q* asociado al scheduler, el cual se
+  // utilizará en ambas colas. Por enunciado, la cola High tendrá el doble de
+  // quantum que la cola Low: Quantum High = 2q, Quantum Low = q.
 
   // - Se carga el tiempo de inicio *T inicio* asociado al scheduler, el cual
   // se utilizará para determinar si un proceso debe ingresar a la cola High.
 
-  int quantum = atoi(input_file->lines[0][0]);
+  int q = atoi(input_file->lines[0][0]); // Define quantum como q
 
   // se crean las colas para pasarlas al scheduler, cada cola recibe el
   // quantum, high recibe 2*quantum y low recibe quantum
 
-  Queue *high_queue = queue_create(10);
-  Queue *low_queue = queue_create(10);
+  Queue *high_queue = create_queue(Numero_de_procesos);
+  Queue *low_queue = create_queue(Numero_de_procesos);
   FinishedProcessList *finished_list = create_finished_processes_list();
   Process *cpu_process = NULL;
 
@@ -252,24 +276,18 @@ int main(int argc, char const *argv[]) {
         process->estado = READY;
 
         // Calcular la prioridad
-        int priority = (tick - process->t_LCPU) - process->t_deadline;
+        int priority = (tick - process->t_LCPU) - process->deadline;
 
         // Insertar en la cola de alta prioridad
-        queue_insert_max(high_queue, process, priority);
+        queue_insert_max(high_queue, process, priority); /////////////
       }
     }
     // Ejecutar el scheduler
-    scheduler(high_queue, low_queue, &cpu_process, tick, finished_list);
+    scheduler(high_queue, low_queue, &cpu_process, tick, finished_list,
+              &procesos_restantes, &Numero_de_procesos, &q, processes);
 
     // Verificar si todos los procesos han terminado
-    bool all_finished = true;
-    for (int i = 0; i < Numero_de_procesos; i++) {
-      if (processes[i]->estado != FINISHED) {
-        all_finished = false;
-        break;
-      }
-    }
-    if (all_finished && cpu_process == NULL) {
+    if (Numero_de_procesos == 0) {
       break;
     }
 
@@ -277,17 +295,15 @@ int main(int argc, char const *argv[]) {
     tick++;
   }
 
-  // Al final de la simulación, procesar los procesos finalizados
+  // 5. Procesar la lista de procesos finalizados y generar el informe
   walk_in_finished_processes(finished_list);
 
-  // Liberar recursos
+  // 6. Liberar recursos y memoria asignada
   free_finished_processes_list(finished_list);
-
   for (int i = 0; i < Numero_de_procesos; i++) {
     free(processes[i]);
   }
   free(processes);
-
   queue_free(high_queue);
   queue_free(low_queue);
   input_file_destroy(input_file);

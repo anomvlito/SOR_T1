@@ -29,6 +29,7 @@ Process *create_process(char *name, int pid, int t_inicio, estado_t estado,
 
 
 
+
 void add_node(Queue *queue, Node* node) {
     if (queue->first_process == NULL) {
         queue->first_process = node;
@@ -107,3 +108,4 @@ Process *extraer_prioritario(Queue *queue, int tick) {
 
 
 }
+

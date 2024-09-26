@@ -2,17 +2,17 @@
 #include <stdlib.h>
 
 typedef struct node_t {
-    int id;
-    int priority;
+  int id;
+  int priority;
 } Node;
 
 typedef struct queue_t {
-    Node **nodes;
-    int size;
-    int capacity;
+  Node **nodes;
+  int size;
+  int capacity;
 } Queue;
 
-Queue *queue_create(int capacity);
+Queue *create_queue(int capacity);
 
 void queue_free(Queue *queue);
 

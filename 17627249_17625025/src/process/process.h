@@ -23,21 +23,23 @@ typedef struct process {
   char nombre[10];
   int pid;
   int t_inicio;
-  int burst_time; // Tiempo de ejecucion por rafaga
+  int burst_time;                         // Tiempo de ejecucion por rafaga
   int num_bursts_solicitados_por_proceso; //
   int io_wait_time;
   int deadline;
   estado_t estado;
   ultima_cola_visitada_t ultima_cola_visitada;
   int quantum;
-  int t_LCPU; 
+  int t_LCPU;
   char queue[10];
   int interrupciones;
   int turnaround_time;
   int response_time;
-  int waiting_time; // numero de veces que se encuentre en estado waiting y ready(sin contar ready cuando pasa a running)
-  //sumar +1 siempre que este en ready y waiting, al ingresar un proceso a la cpu ANTES de actualizar su estado a running, reviar
-  //si es ready, si es asi hay que restarle 1.
+  int waiting_time; // numero de veces que se encuentre en estado waiting y
+                    // ready(sin contar ready cuando pasa a running)
+  // sumar +1 siempre que este en ready y waiting, al ingresar un proceso a la
+  // cpu ANTES de actualizar su estado a running, reviar si es ready, si es asi
+  // hay que restarle 1.
   int deadline_sum;
   int num_current_complete_burst; // para saber si es su primera rafaga, y su ultima para pasar a finished
   int current_burst; // para saber si sale de la CPU 
