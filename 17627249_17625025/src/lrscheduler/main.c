@@ -49,22 +49,22 @@ void move_processes_from_low_to_high(Queue *low_queue, Queue *high_queue,
 // Función para actualizar el estado de los procesos que han terminado su tiempo
 // de espera de I/O
 void update_waiting_processes(Queue *queue, int tick) {
-  // for (int i = 0; i < queue->capacity; i++) {
-  //   Node *node = queue->nodes[i];
-  //   Process *process = get_process_by_id(node->id);
-  //   if (process->estado == WAITING && process->current_io_wait_time > 0) {
-  //     process->current_io_wait_time--;
-  //     if (process->current_io_wait_time == 0) {
-  //       process->estado = READY;
-  //       // Recalcular la prioridad
-  //       int new_priority = (tick - process->t_LCPU) - process->deadline;
-  //       node->priority = new_priority;
-  //       // Re-heapificar desde el índice actual
-  //       max_percolate_up(queue, i);
-  //       max_percolate_down(queue, i);
-  //     }
-  //   }
-  // }
+  for (int i = 0; i < queue->capacity; i++) {
+    Node *node = queue->nodes[i];
+    Process *process = get_process_by_id(node->id);
+    if (process->estado == WAITING && process->current_io_wait_time > 0) {
+      process->current_io_wait_time--;
+      if (process->current_io_wait_time == 0) {
+        process->estado = READY;
+        // Recalcular la prioridad
+        int new_priority = (tick - process->t_LCPU) - process->deadline;
+        node->priority = new_priority;
+        // Re-heapificar desde el índice actual
+        max_percolate_up(queue, i);
+        max_percolate_down(queue, i);
+      }
+    }
+  }
 }
 
 ///
