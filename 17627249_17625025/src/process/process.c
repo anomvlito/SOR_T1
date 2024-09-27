@@ -1,5 +1,6 @@
 #include "process.h"
 
+
 Process *create_process(char *name, int pid, int t_inicio, estado_t estado,
                         int burst_time, int num_bursts, int io_wait_time,
                         int deadline) {
@@ -28,9 +29,8 @@ Process *create_process(char *name, int pid, int t_inicio, estado_t estado,
 }
 
 
-
-
-void add_node(Queue *queue, Node* node) {
+void add_process(Queue *queue, Process* process) {
+    Node* node = calloc(1, sizeof(Node));
     if (queue->first_process == NULL) {
         queue->first_process = node;
         queue->last_process = node;
@@ -41,7 +41,8 @@ void add_node(Queue *queue, Node* node) {
     }
 }
 
-void extract_process(Queue* queue, Process* process) {
+
+Process* extract_process(Queue* queue, Process* process) {
   Node* actual_node = queue->first_process;
   Node* previous_node = NULL;
 
@@ -54,10 +55,12 @@ void extract_process(Queue* queue, Process* process) {
           if (actual_node->next != NULL) {
               // no es el ultimo y no tendra previous ya que se elimino el primero
               actual_node->next->previous = NULL;
+              return actual_node->process;
           } 
           else {
               // es el unico y ultimo por lo tanto se elimina el ultimo
               queue->last_process = NULL;
+              return actual_node->process;
           }
       } 
       else {
@@ -67,13 +70,14 @@ void extract_process(Queue* queue, Process* process) {
           if (actual_node->next != NULL) {
               //no era el ultimo
               actual_node->next->previous = previous_node;
+              return actual_node->process;
           } 
           else {
               //era el ultimo
               queue->last_process = previous_node;
+              return actual_node->process;
           }
       }
-      free(actual_node);
     }
     previous_node = actual_node;
     actual_node = actual_node->next;
@@ -82,9 +86,8 @@ void extract_process(Queue* queue, Process* process) {
 
 
 Process *extraer_prioritario(Queue *queue, int tick) {
-    Node* temp_node = calloc(1, sizeof(Node));
-    Node* priority_node = calloc(1, sizeof(Node));
-    temp_node = queue->first_process;
+    Node* priority_node = NULL;
+    Node* temp_node = queue->first_process;
 
     while (temp_node != NULL){
         if (temp_node->process->estado != WAITING){
@@ -95,17 +98,26 @@ Process *extraer_prioritario(Queue *queue, int tick) {
             else if (tick - priority_node->process->t_LCPU - priority_node->process->deadline 
             == tick - temp_node->process->t_LCPU - temp_node->process->deadline){
                 //escoge el que tiene menor pid
-                if (priority_node->process->pid < temp_node->process->pid){ 
+                if (priority_node->process->pid > temp_node->process->pid){ 
                 priority_node = temp_node;
                 }
             }
-
-            temp_node = temp_node->next;
         }
-
-      
+        temp_node = temp_node->next;
     }
-
-
+    return priority_node->process;
 }
 
+
+void freeQueue(Queue* queue) {
+    Node* node = queue->first_process;
+
+    while (node != NULL) {
+        free(node->process);
+        Node* next = node;
+        free(node);
+        node = next;
+    }
+
+    free(queue);
+}
