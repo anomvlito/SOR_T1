@@ -34,7 +34,8 @@ void add_process(Queue *queue, Process* process) {
     if (queue->first_process == NULL) {
         queue->first_process = node;
         queue->last_process = node;
-    } else {
+    } 
+    else {
         queue->last_process->next = node;
         node->previous = queue->last_process;
         queue->last_process = node;
@@ -93,11 +94,11 @@ Process *extraer_prioritario(Queue *queue, int tick) {
         if (temp_node->process->estado != WAITING){
             if (tick - priority_node->process->t_LCPU - priority_node->process->deadline 
             < tick - temp_node->process->t_LCPU - temp_node->process->deadline){ 
-              priority_node = temp_node;}
-
+              priority_node = temp_node;
+            }
             else if (tick - priority_node->process->t_LCPU - priority_node->process->deadline 
             == tick - temp_node->process->t_LCPU - temp_node->process->deadline){
-                //escoge el que tiene menor pid
+                // si el deadline es igual escoge el de menor pid
                 if (priority_node->process->pid > temp_node->process->pid){ 
                 priority_node = temp_node;
                 }
@@ -105,7 +106,14 @@ Process *extraer_prioritario(Queue *queue, int tick) {
         }
         temp_node = temp_node->next;
     }
-    return priority_node->process;
+
+    if (priority_node == NULL){
+        Process* process = NULL;
+        return process;
+    }
+    else {
+        return priority_node->process;
+    }
 }
 
 
@@ -120,4 +128,23 @@ void freeQueue(Queue* queue) {
     }
 
     free(queue);
+}
+
+void print_finished_processes(Queue* queue, FILE* outputfile){
+    Node* node = queue->first_process;
+
+    while (node != NULL) {
+        char nombre = node->process->nombre;
+        int pid = node->process->pid;
+        int interrupciones = node->process->interrupciones;
+        int turnaround = node->process->turnaround_time;
+        int response = node->process->response_time;
+        int waiting = node->process->waiting_time;
+        int deadline_sum = deadline_sum;
+
+        fprintf(outputfile, "%s, %d, %d, %d, %d, %d, %d\n", 
+        nombre, pid, interrupciones, turnaround, response, waiting, deadline_sum);
+        Node* next = node;
+        node = next;
+    }
 }

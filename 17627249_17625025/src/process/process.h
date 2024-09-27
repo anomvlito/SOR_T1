@@ -1,5 +1,5 @@
 #pragma once
-#include <stdio.h>
+#include <stdio.h> 
 #include <stdbool.h>
 #include <stdlib.h>
 
@@ -61,5 +61,11 @@ typedef struct queue {
     quantum;
 } Queue;
 
-
-
+Process *create_process(char *name, int pid, int t_inicio, estado_t estado,
+                        int burst_time, int num_bursts, int io_wait_time,
+                        int deadline);
+void add_process(Queue *queue, Process* process);
+Process* extract_process(Queue* queue, Process* process);
+Process *extraer_prioritario(Queue *queue, int tick);
+void freeQueue(Queue* queue);
+void print_finished_processes(Queue* queue, FILE* outputfile);                        
