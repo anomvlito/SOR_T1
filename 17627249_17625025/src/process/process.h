@@ -1,6 +1,6 @@
 #pragma once
-#include <stdio.h> 
 #include <stdbool.h>
+#include <stdio.h>
 #include <stdlib.h>
 
 // Definir el struct Process:
@@ -36,14 +36,16 @@ typedef struct process {
   int turnaround_time;
   int response_time;
   int waiting_time; // numero de veces que se encuentre en estado waiting y
-                    // ready(sin contar ready cuando pasa a running)
+                    // ready (sin contar ready cuando pasa a running)
   // sumar +1 siempre que este en ready y waiting, al ingresar un proceso a la
   // cpu ANTES de actualizar su estado a running, reviar si es ready, si es asi
   // hay que restarle 1.
   int deadline_sum;
-  int num_current_complete_burst; // para saber si es su primera rafaga, y su ultima para pasar a finished
-  int current_burst; // para saber si sale de la CPU 
-  int current_io_wait_time; // para saber cuando pueda pasar a READY, en cada iteracion que esta en waiting se le suma 1 y al 
+  int num_current_complete_burst; // para saber si es su primera rafaga, y su
+                                  // ultima para pasar a finished
+  int current_burst;              // para saber si sale de la CPU
+  int current_io_wait_time; // para saber cuando pueda pasar a READY, en cada
+                            // iteracion que esta en waiting se le suma 1 y al
   // igualarse con io_wait_time queda en ready
 
 } Process;
@@ -55,18 +57,24 @@ typedef struct node {
 } Node;
 
 typedef struct queue {
-    Node* first_process;
-    Node* last_process;
-    int len;
-    quantum;
+  Node *first_process;
+  Node *last_process;
+  int len;
+  int quantum;
 } Queue;
 
-Process *create_process(char *name, int pid, int t_inicio, estado_t estado,
-                        int burst_time, int num_bursts, int io_wait_time,
-                        int deadline);
-void add_process(Queue *queue, Process* process);
-Process* extract_process(Queue* queue, Process* process);
+// Funciones declaracion
+
+// process.h
+Process *create_process(char **line);
+
+Queue *create_queue(int capacity, int quantum);
+Node *create_node(Process *process);
+
+void add_node(Queue *queue, Node *node);
+
+Process *extract_process(Queue *queue, Process *process);
+
 Process *extraer_prioritario(Queue *queue, int tick);
-void freeQueue(Queue* queue);
-void print_finished_processes(Queue* queue, FILE* outputfile);          
-void move_processes_from_low_to_high(Queue* low_queue, Queue* high_queue, int tick);              
+
+void queue_free(Queue *queue);

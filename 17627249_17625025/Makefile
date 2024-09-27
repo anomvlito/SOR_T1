@@ -45,7 +45,7 @@ LIB=$(MTH)
 ###############################################################################
 
 # Directorios con elementos de uso común
-COMMON=file_manager process queue procesos_terminados
+COMMON=file_manager process queue finished_processes
 
 # Directorios que serán compilados a un programa
 PROGRAMS=lrscheduler

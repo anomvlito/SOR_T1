@@ -2,7 +2,6 @@
 
 #include "../file_manager/manager.h"
 #include "../process/process.h"
-#include "../queue/queue.h"
 #include <stdio.h> // FILE, fopen, fclose, etc
 
 FinishedProcessList *create_finished_finished_processes_list() {
@@ -32,26 +31,21 @@ void add_finished_process(FinishedProcessList *list, Process *process) {
   }
 }
 
-void walk_in_finished_processes(FinishedProcessList *list) {
-  FinishedProcessNode *current = list->head;
+void print_finished_processes(Queue *queue, FILE *outputfile) {
+  Node *node = queue->first_process;
 
-  while (current != NULL) {
-    Process *process = current->process;
-    // Procesar el proceso (imprimir información, calcular estadísticas, etc.)
-    printf("Proceso %d finalizó en el tick \n", process->pid);
+  while (node != NULL) {
+    char nombre = node->process->nombre;
+    int pid = node->process->pid;
+    int interrupciones = node->process->interrupciones;
+    int turnaround = node->process->turnaround_time;
+    int response = node->process->response_time;
+    int waiting = node->process->waiting_time;
+    int deadline_sum = deadline_sum;
 
-    // #####################################################################################################
-    // #####################################################################################################
-    // #####################################################################################################
-
-    //                completar
-
-    // #####################################################################################################
-    // #####################################################################################################
-    // #####################################################################################################
-
-    // Avanzar al siguiente nodo
-    current = current->next;
+    fprintf(outputfile, "%s, %d, %d, %d, %d, %d, %d\n", nombre, pid,
+            interrupciones, turnaround, response, waiting, deadline_sum);
+    node = node->next;
   }
 }
 
