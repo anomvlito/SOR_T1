@@ -68,4 +68,5 @@ void add_process(Queue *queue, Process* process);
 Process* extract_process(Queue* queue, Process* process);
 Process *extraer_prioritario(Queue *queue, int tick);
 void freeQueue(Queue* queue);
-void print_finished_processes(Queue* queue, FILE* outputfile);                        
+void print_finished_processes(Queue* queue, FILE* outputfile);          
+void move_processes_from_low_to_high(Queue* low_queue, Queue* high_queue, int tick);              

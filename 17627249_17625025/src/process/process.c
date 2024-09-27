@@ -122,7 +122,7 @@ void freeQueue(Queue* queue) {
 
     while (node != NULL) {
         free(node->process);
-        Node* next = node;
+        Node* next = node->next;
         free(node);
         node = next;
     }
@@ -144,7 +144,23 @@ void print_finished_processes(Queue* queue, FILE* outputfile){
 
         fprintf(outputfile, "%s, %d, %d, %d, %d, %d, %d\n", 
         nombre, pid, interrupciones, turnaround, response, waiting, deadline_sum);
-        Node* next = node;
-        node = next;
+        node = node->next;
     }
+}
+
+void move_processes_from_low_to_high(Queue* low_queue, Queue* high_queue, int tick){
+    Node* node = low_queue->first_process;
+
+    while (node != NULL) {
+        int deadline = node->process->deadline;
+        int t_lcpu = node->process->t_LCPU;
+        
+        if (2 * deadline < tick - t_lcpu){
+          Node* temp_node = node;
+          Process* process = extract_process(low_queue, node->process);
+          add_process(high_queue, node->process);
+          node = temp_node;
+        }
+        node = node->next;
+    }    
 }
