@@ -164,3 +164,19 @@ void move_processes_from_low_to_high(Queue* low_queue, Queue* high_queue, int ti
         node = node->next;
     }    
 }
+
+void update_waiting_processes(Queue *queue, int tick) {
+    Node* node = queue->first_process;
+
+    while (node != NULL) {
+        if (node->process->estado == WAITING){
+            if (node->process->current_io_wait_time > 0){
+                node->process->current_io_wait_time --;
+            }
+            else if(node->process->current_io_wait_time == 0){
+                node->process->estado == READY;
+            }
+        }
+        node = node->next;
+    } 
+}
