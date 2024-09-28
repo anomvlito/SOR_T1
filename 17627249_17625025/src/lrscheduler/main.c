@@ -317,7 +317,7 @@ int main(int argc, char const *argv[]) {
     }
   }
 
-  // 	## 3) Se crea el Scheduler, el cual recibe las colas High y Low, el
+  // 	##} Se crea el Scheduler, el cual recibe las colas High y Low, el
 
   while (procesos_restantes > 0) {
     fprintf(stderr, "empieza Tick: %d\n", tick);
@@ -333,17 +333,17 @@ int main(int argc, char const *argv[]) {
     fprintf(stderr, "termina Tick: %d\n", tick);
   }
 
-  // 5. Procesar la lista de procesos finalizados y generar el informe
-  FILE *outputfile = fopen("output.txt", "w");
+  //  Procesar la lista de procesos finalizados y generar el informe
+  FILE *outputfile = fopen("output.csv", "w");
   if (outputfile != NULL) {
+    // Write CSV header
     print_finished_processes(finished_queue, outputfile);
     fclose(outputfile);
   } else {
     printf("Error al abrir el archivo de salida.\n");
   }
 
-  // 6. Liberar recursos y memoria asignada
-
+  //  Liberar memoriaaaaaaaaaaaaaaaaaaaaaaa
   for (int i = 0; i < Numero_de_procesos; i++) {
     free(processes[i]);
   }

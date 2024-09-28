@@ -20,7 +20,7 @@ Process *create_process(char **line) {
   process->io_wait_time = atoi(line[5]);
   process->deadline = atoi(line[6]);
 
-  // Inicializar el resto de los campos de `process` con valores predeterminados
+  // Inicializar el resto con valores predeterminados
   process->ultima_cola_visitada = HIGH_QUEUE;
   process->quantum = 0;
   process->interrupciones = 0;
