@@ -35,16 +35,23 @@ void print_finished_processes(Queue *queue, FILE *outputfile) {
   Node *node = queue->first_process;
 
   while (node != NULL) {
-    char nombre = node->process->nombre;
-    int pid = node->process->pid;
-    int interrupciones = node->process->interrupciones;
-    int turnaround = node->process->turnaround_time;
-    int response = node->process->response_time;
-    int waiting = node->process->waiting_time;
-    int deadline_sum = deadline_sum;
+    Process *process = node->process;
+    if (process != NULL) {
+      char *nombre = process->nombre;
+      int pid = process->pid;
+      int interrupciones = process->interrupciones;
+      int turnaround = process->turnaround_time;
+      int response = process->response_time;
+      int waiting = process->waiting_time;
+      int deadline_sum = process->deadline_sum;
 
-    fprintf(outputfile, "%s, %d, %d, %d, %d, %d, %d\n", nombre, pid,
-            interrupciones, turnaround, response, waiting, deadline_sum);
+      fprintf(outputfile, "%s,%d,%d,%d,%d,%d,%d\n", nombre, pid, interrupciones,
+              turnaround, response, waiting, deadline_sum);
+      ;
+    } else {
+      fprintf(outputfile,
+              "Proceso nulo encontrado en la cola de finalizados.\n");
+    }
     node = node->next;
   }
 }

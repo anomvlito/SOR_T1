@@ -25,7 +25,7 @@ Process *create_process(char **line) {
   process->quantum = 0;
   process->interrupciones = 0;
   process->turnaround_time = 0;
-  process->response_time = 0;
+  process->response_time = -1;
   process->waiting_time = 0;
   process->deadline_sum = 0;
   process->num_current_complete_burst = 0;
@@ -136,7 +136,7 @@ void queue_free(Queue *queue) {
   Node *current_node = queue->first_process;
   while (current_node != NULL) {
     Node *next_node = current_node->next;
-    free(current_node->process);
+    // No liberar current_node->process aquí
     free(current_node);
     current_node = next_node;
   }
