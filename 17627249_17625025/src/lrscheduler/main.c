@@ -33,10 +33,10 @@ void move_processes_from_low_to_high(Queue *low_queue, Queue *high_queue,
     int t_lcpu = node->process->t_LCPU;
     if (2 * deadline <= tick - t_lcpu) {
       Process *process = extract_process(low_queue, node->process);
+      process->ultima_cola_visitada = HIGH_QUEUE; // Update here
       add_node(high_queue, create_node(process));
     }
-
-    node = next_node; // Avanza al siguiente nodo
+    node = next_node;
   }
 }
 
@@ -62,19 +62,21 @@ Process *priority_process(Queue *high_queue, Queue *low_queue, int tick) {
   if (process != NULL) {
     // Sacar el proceso de la cola high
     extract_process(high_queue, process);
+    process->ultima_cola_visitada = HIGH_QUEUE; // Update here
   } else {
-    process = extraer_prioritario(high_queue, tick);
+    process = extraer_prioritario(low_queue, tick);
     if (process != NULL) {
-      // Sacar el proceso de la cola lows
+      // Sacar el proceso de la cola low
       extract_process(low_queue, process);
+      process->ultima_cola_visitada = LOW_QUEUE; // Update here
     }
   }
   return process;
 }
 
 void scheduler(Queue *high_queue, Queue *low_queue, Process **cpu_process,
-               int tick, Queue *finished_queue, int *procesos_restantes,
-               int *Numero_de_procesos, int *q, Process **processes) {
+               int tick, Queue *finished_queue, int *procesos_restantes, int q,
+               Process **processes, int total_processes) {
 
   // 1) Actualizar los procesos que hayan terminado su tiempo de espera de I/O
   // de `WAITING` a `READY`
@@ -113,10 +115,11 @@ void scheduler(Queue *high_queue, Queue *low_queue, Process **cpu_process,
         // La ráfaga no ha terminado
         (*cpu_process)->interrupciones++; // Aumentar interrupciones
         (*cpu_process)->estado = READY;   // Proceso sigue en estado READY
-        (*cpu_process)->quantum = *q; // Reiniciar el quantum para la cola low
+        (*cpu_process)->quantum = q; // Reiniciar el quantum para la cola low
         (*cpu_process)->t_LCPU = tick;
 
         // Inserta el proceso en la cola low
+        (*cpu_process)->ultima_cola_visitada = LOW_QUEUE;
         add_node(low_queue, create_node(*cpu_process));
         *cpu_process = NULL; // Liberar la CPU
       } else {
@@ -128,8 +131,8 @@ void scheduler(Queue *high_queue, Queue *low_queue, Process **cpu_process,
           // Aún quedan ráfagas por ejecutar
           (*cpu_process)->estado = WAITING;
           (*cpu_process)->quantum =
-              ((*cpu_process)->ultima_cola_visitada == HIGH_QUEUE) ? (2 * (*q))
-                                                                   : *q;
+              ((*cpu_process)->ultima_cola_visitada == HIGH_QUEUE) ? (2 * q)
+                                                                   : q;
 
           (*cpu_process)->current_io_wait_time = (*cpu_process)->io_wait_time;
           (*cpu_process)->t_LCPU = tick;
@@ -143,7 +146,8 @@ void scheduler(Queue *high_queue, Queue *low_queue, Process **cpu_process,
         } else {
           // El proceso termina su ejecución
           (*cpu_process)->estado = FINISHED;
-          *procesos_restantes -= 1;
+          (*procesos_restantes) -= 1;
+
           (*cpu_process)->t_LCPU = tick;
           add_node(finished_queue, create_node(*cpu_process));
           *cpu_process = NULL; // Liberar la CPU
@@ -163,9 +167,8 @@ void scheduler(Queue *high_queue, Queue *low_queue, Process **cpu_process,
           // Aún quedan ráfagas por ejecutar
           (*cpu_process)->estado = WAITING;
           (*cpu_process)->quantum =
-              ((*cpu_process)->ultima_cola_visitada == HIGH_QUEUE) ? (2 * (*q))
-                                                                   : *q;
-
+              ((*cpu_process)->ultima_cola_visitada == HIGH_QUEUE) ? (2 * q)
+                                                                   : q;
           (*cpu_process)->current_io_wait_time = (*cpu_process)->io_wait_time;
           (*cpu_process)->t_LCPU = tick;
 
@@ -178,7 +181,7 @@ void scheduler(Queue *high_queue, Queue *low_queue, Process **cpu_process,
         } else {
           // El proceso termina su ejecución
           (*cpu_process)->estado = FINISHED;
-          *procesos_restantes -= 1;
+          procesos_restantes -= 1; // Cambio realizado aquí
           (*cpu_process)->t_LCPU = tick;
           add_node(finished_queue, create_node(*cpu_process));
           *cpu_process = NULL; // Liberar la CPU
@@ -189,13 +192,14 @@ void scheduler(Queue *high_queue, Queue *low_queue, Process **cpu_process,
 
   // 3) Ingresar los procesos a las colas según corresponda, cola low fue
   // tratada anteriormente
-  for (int i = 0; i < *Numero_de_procesos; i++) {
+  for (int i = 0; i < total_processes; i++) {
     Process *process = processes[i];
     if (process->t_inicio == tick) {
       // 3.2) Proceso ingresa por primera vez al scheduler en estado READY y a
       // la cola High
       process->estado = READY;
-      process->quantum = 2 * (*q);
+      process->quantum = 2 * q;
+
       process->t_LCPU = tick; // Actualizar el tiempo de inicio del proceso
       Node *new_node = create_node(process);
       add_node(high_queue, new_node);
@@ -271,11 +275,15 @@ int main(int argc, char const *argv[]) {
   // se crean los procesos y se guardan en un array de procesos
   for (int i = 0; i < Numero_de_procesos; ++i) {
     processes[i] = create_process(input_file->lines[i]);
+    if (processes[i] == NULL) {
+      fprintf(stderr, "Error al crear el proceso %d\n", i);
+      return 1;
+    }
   }
 
   // 	## 3) Se crea el Scheduler, el cual recibe las colas High y Low, el
 
-  while (1) {
+  while (procesos_restantes > 0) {
 
     // Manejar la llegada de nuevos procesos
     for (int i = 0; i < Numero_de_procesos; i++) {
@@ -288,6 +296,7 @@ int main(int argc, char const *argv[]) {
         process->t_LCPU = tick;   // Actualizar el tiempo de inicio del proceso
 
         // Crear un nodo para el proceso y agregarlo a la cola high
+        process->ultima_cola_visitada = HIGH_QUEUE;
         add_node(high_queue, create_node(process));
 
         // Incrementar el waiting_time porque ingresó en estado READY y aún no
@@ -297,12 +306,7 @@ int main(int argc, char const *argv[]) {
     }
     // Ejecutar el scheduler
     scheduler(high_queue, low_queue, &cpu_process, tick, finished_queue,
-              &procesos_restantes, &Numero_de_procesos, &q, processes);
-
-    // Verificar si todos los procesos han terminado
-    if (Numero_de_procesos == 0) {
-      break;
-    }
+              &procesos_restantes, q, processes, Numero_de_procesos);
 
     // Incrementar el tick
     tick++;
