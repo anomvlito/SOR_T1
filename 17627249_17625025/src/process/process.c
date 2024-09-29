@@ -1,6 +1,5 @@
 #include "process.h"
-#include <string.h> // Añadir esta línea para declarar strncpy
-
+#include <string.h>
 Process *create_process(char **line) {
   Process *process = calloc(1, sizeof(Process));
 
@@ -14,7 +13,7 @@ Process *create_process(char **line) {
   process->pid = atoi(line[1]);
   process->t_inicio = atoi(line[2]);
   process->estado = READY;                    // Estado inicial
-  process->ultima_cola_visitada = HIGH_QUEUE; // O el valor que corresponda
+  process->ultima_cola_visitada = HIGH_QUEUE; // Cola inicial
   process->burst_time = atoi(line[3]);
   process->num_bursts_solicitados_por_proceso = atoi(line[4]);
   process->io_wait_time = atoi(line[5]);
